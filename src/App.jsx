@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import ProductModal from "./components/productModal";
 
 const API_BASE = import.meta.env.VITE_API_BASEURL;
@@ -8,6 +8,7 @@ const API_PATH = import.meta.env.VITE_API_PATH;
 function App() {
   const [products, setProducts] = useState([]);
   const [tempProduct, setTempProduct] = useState([]);
+  const [cartsData, setCartsData] = useState([]);
   const [isOpenProductModal, setIsOpenProductModal] = useState(false);
 
   const getProducts = async () => {
@@ -15,8 +16,31 @@ function App() {
       const response = await axios.get(
         `${API_BASE}/api/${API_PATH}/products/all`,
       );
-      console.log(response.data.products);
       setProducts(response.data.products);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getCartsData = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/api/${API_PATH}/cart`);
+      setCartsData(response.data.data.carts);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // NOTE: Add item in cart
+  const addCartItem = async (product_id, qty) => {
+    try {
+      await axios.post(`${API_BASE}/api/${API_PATH}/cart`, {
+        data: {
+          product_id,
+          qty: Number(qty),
+        },
+      });
+      getCartsData();
     } catch (error) {
       console.log(error);
     }
@@ -28,6 +52,7 @@ function App() {
   };
   useEffect(() => {
     getProducts();
+    getCartsData();
   }, []);
 
   return (
@@ -39,6 +64,7 @@ function App() {
             tempProduct={tempProduct}
             isOpen={isOpenProductModal}
             setIsOpen={setIsOpenProductModal}
+            addCartItem={addCartItem}
           />
           {/* 產品Modal */}
           <table className="table align-middle">
@@ -90,28 +116,67 @@ function App() {
               清空購物車
             </button>
           </div>
+          {/* Cart rows here */}
+          {/* NOTE: Cart data  */}
           <table className="table align-middle">
             <thead>
               <tr>
                 <th></th>
                 <th>品名</th>
                 <th style={{ width: "150px" }}>數量/單位</th>
-                <th>單價</th>
+                <th className="text-end">單價</th>
               </tr>
             </thead>
-            <tbody>{/* Cart rows here */}</tbody>
+
+            <tbody>
+              {cartsData.map((cart) => (
+                <tr key={cart.product_id}>
+                  <td>
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger btn-sm"
+                    >
+                      x
+                    </button>
+                  </td>
+                  <td>{cart.product.title}</td>
+                  <td style={{ width: "150px" }}>
+                    <div className="d-flex align-items-center">
+                      <div className="btn-group me-2" role="group">
+                        <button
+                          type="button"
+                          className="btn btn-outline-dark btn-sm"
+                        >
+                          -
+                        </button>
+                        <span
+                          className="btn border border-dark"
+                          style={{ width: "50px", cursor: "auto" }}
+                        >
+                          {cart.qty}
+                        </span>
+                        <button
+                          type="button"
+                          className="btn btn-outline-dark btn-sm"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <span className="input-group-text bg-transparent border-0">
+                        {cart.product.unit}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="text-end">{cart.total}</td>
+                </tr>
+              ))}
+            </tbody>
             <tfoot>
               <tr>
                 <td colSpan="3" className="text-end">
-                  總計
+                  總計：
                 </td>
-                <td className="text-end"></td>
-              </tr>
-              <tr>
-                <td colSpan="3" className="text-end text-success">
-                  折扣價
-                </td>
-                <td className="text-end text-success"></td>
+                <td className="text-end" style={{ width: "130px" }}></td>
               </tr>
             </tfoot>
           </table>

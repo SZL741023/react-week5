@@ -1,6 +1,11 @@
+import axios from "axios";
 import { Modal } from "bootstrap";
 import { useEffect, useRef, useState } from "react";
-function ProductModal({ tempProduct, isOpen, setIsOpen }) {
+
+const API_BASE = import.meta.env.VITE_API_BASEURL;
+const API_PATH = import.meta.env.VITE_API_PATH;
+
+function ProductModal({ tempProduct, isOpen, setIsOpen, addCartItem }) {
   const [modalData, setModalData] = useState(tempProduct);
   const [qtySelect, setQtySelect] = useState(1);
   const productModalRef = useRef(null);
@@ -13,9 +18,8 @@ function ProductModal({ tempProduct, isOpen, setIsOpen }) {
     new Modal(productModalRef.current, { backdrop: false });
   }, []);
 
+  // NOTE: handle modal close
   const handleCloseModal = () => {
-    // const modalInstance = Modal.getInstance(productModalRef.current);
-    // modalInstance.hide();
     setIsOpen(false);
   };
 
@@ -76,7 +80,14 @@ function ProductModal({ tempProduct, isOpen, setIsOpen }) {
               </div>
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn btn-primary">
+              <button
+                onClick={() => {
+                  addCartItem(modalData.id, qtySelect);
+                  setIsOpen(false);
+                }}
+                type="button"
+                className="btn btn-primary"
+              >
                 加入購物車
               </button>
             </div>
